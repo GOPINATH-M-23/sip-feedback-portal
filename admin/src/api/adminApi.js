@@ -1,4 +1,6 @@
 import adminConfig from '../config/adminConfig';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 export const adminApi = {
   login: (password) => {
@@ -21,23 +23,19 @@ export const adminApi = {
 
   getFeedback: async () => {
     try {
-      // First try relative /api/feedback (uses Vite proxy or domain proxy)
-      let response;
-      try {
-        response = await fetch('/api/feedback');
-        if (!response.ok) throw new Error('Relative fetch failed');
-      } catch (err) {
-        // Fallback to direct absolute URL
-        response = await fetch(`${adminConfig.API_BASE_URL}/api/feedback`);
-      }
-
-      if (!response.ok) {
-        throw new Error(`Network response error: ${response.statusText}`);
-      }
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      const querySnapshot = await getDocs(collection(db, "feedback"));
+      const feedbacks = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        feedbacks.push({
+          _id: doc.id,
+          ...data,
+          submitted_at: data.submitted_at?.toDate ? data.submitted_at.toDate().toISOString() : data.submitted_at
+        });
+      });
+      return feedbacks;
     } catch (error) {
-      console.error("Failed to fetch feedback data:", error);
+      console.error("Failed to fetch feedback data from Firestore:", error);
       return [];
     }
   }

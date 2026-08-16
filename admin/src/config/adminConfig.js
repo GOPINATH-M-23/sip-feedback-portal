@@ -3,7 +3,6 @@ export const adminConfig = {
   COLLEGE_NAME: "Thiagarajar College of Engineering",
   PROGRAM_NAME: "First Year Student Induction Programme 2026",
   PORTAL_TITLE: "SIP Admin Panel",
-  API_BASE_URL: "https://server.tceapps.in",
 
   QUESTIONS: {
     Q1: "Opinion about overall session",

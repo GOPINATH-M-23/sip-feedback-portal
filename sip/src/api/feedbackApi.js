@@ -1,7 +1,8 @@
 import sessionDataFull from '../data/sessionData.js';
 import sessionDataSelected from '../data/sessionData_selected_with_motivational.js';
 
-const API_URL = 'https://server.tceapps.in';
+import { collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 export const questions = {
   Q1: "Opinion about overall session",
@@ -40,42 +41,42 @@ const getSortedDatesForDept = (dept) => {
 
 export const api = {
   /**
-   * Fetches all feedback from the MongoDB server.
+   * Fetches all feedback from Firestore "feedback" collection.
    * @returns {Promise<Array>} A promise that resolves to an array of feedback objects.
    */
   getFeedback: async () => {
     try {
-      const response = await fetch(`${API_URL}/api/feedback`);
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
-      return await response.json();
+      const querySnapshot = await getDocs(collection(db, "feedback"));
+      const feedbacks = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        feedbacks.push({
+          _id: doc.id,
+          ...data,
+          submitted_at: data.submitted_at?.toDate ? data.submitted_at.toDate() : data.submitted_at
+        });
+      });
+      return feedbacks;
     } catch (error) {
-      console.error("Failed to fetch feedback:", error);
+      console.error("Failed to fetch feedback from Firestore:", error);
       return [];
     }
   },
 
   /**
-   * Submits a new feedback entry to the MongoDB server.
+   * Submits a new feedback entry to Firestore "feedback" collection.
    * @param {object} feedback - The feedback object to submit.
-   * @returns {Promise<object>} A promise that resolves to the server's response.
+   * @returns {Promise<object>} A promise that resolves to the response object with status.
    */
   submitFeedback: async (feedback) => {
     try {
-      const response = await fetch(`${API_URL}/api/feedback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(feedback),
+      const docRef = await addDoc(collection(db, "feedback"), {
+        ...feedback,
+        submitted_at: serverTimestamp()
       });
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
-      return await response.json();
+      return { status: 'success', message: 'Feedback saved.', inserted_id: docRef.id };
     } catch (error) {
-      console.error("Failed to submit feedback:", error);
+      console.error("Failed to submit feedback to Firestore:", error);
       return { status: 'error', message: error.toString() };
     }
   },

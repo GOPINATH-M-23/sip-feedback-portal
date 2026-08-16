@@ -150,7 +150,7 @@ export const LoginPage = () => {
               placeholder="Full Name"
               value={formData.name}
               onChange={handleChange}
-              pattern="[a-zA-Z\s.-]+"
+              pattern="[a-zA-Z .-]+"
               title="Full Name can only contain letters, spaces, and dots."
               required
               className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
